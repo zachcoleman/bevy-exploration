@@ -1,0 +1,20 @@
+[package]
+name = "bevy-exploration"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+codegen-units = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[dependencies]
+bevy = { version="0.10" } # , features=["dynamic_linking"] }
+bevy-inspector-egui = "0.18.1"
+bevy_mod_picking = "0.12"
+bevy_framepace =  "0.12"
+rand = "0.8.5"
