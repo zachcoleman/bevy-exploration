@@ -1,6 +1,5 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
-use bevy_inspector_egui::egui::epaint::text::cursor;
 use bevy_mod_picking::PickingCameraBundle;
 
 /// camera plugin (used to navigate a map)

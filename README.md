@@ -1,7 +1,7 @@
 # bevy-exploration
 Exploring the Rust game engine Bevy
 
-## Run Locally w/ `wasm-`
+## Run Locally w/ `wasm-server-runner`
 
 ```sh
 export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-server-runner
