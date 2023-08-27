@@ -24,7 +24,7 @@ pub fn move_orb(time: Res<Time>, mut query: Query<(&mut Transform, &Orb)>) {
 }
 
 pub fn index_orbs(
-    mut quad_tree: ResMut<quad_tree::QuadTree>,
+    quad_tree: Res<quad_tree::QuadTree>,
     mut query: Query<(Entity, &Transform), With<Orb>>,
 ) {
     for (entity, transform) in query.iter_mut() {
@@ -33,7 +33,8 @@ pub fn index_orbs(
             continue;
         }
         if quad_tree.contains(position){
-            quad_tree.insert(entity, position).unwrap();
+            // quad_tree.insert(entity, position).unwrap();
+            quad_tree.submit_for_insert(entity, position).unwrap();
         }
     }
 }

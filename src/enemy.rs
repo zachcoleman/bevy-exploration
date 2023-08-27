@@ -112,7 +112,7 @@ pub fn enemy_move(time: Res<Time>, mut query: Query<(&mut Transform, Entity), Wi
 }
 
 pub fn index_enemies(
-    mut quad_tree: ResMut<quad_tree::QuadTree>,
+    quad_tree: Res<quad_tree::QuadTree>,
     mut query: Query<(Entity, &Transform), With<Enemy>>,
 ) {
     for (entity, transform) in query.iter_mut() {
@@ -127,10 +127,11 @@ pub fn index_enemies(
         ] {
             let tmp = Vec2::new(transform.translation.x + dx, transform.translation.z + dz);
             if quad_tree.contains(tmp) {
-                quad_tree.insert(
-                    entity,
-                    Vec2::new(transform.translation.x + dx, transform.translation.z + dz),
-                ).unwrap();
+                quad_tree.submit_for_insert(entity, tmp).unwrap();
+                // quad_tree.insert(
+                //     entity,
+                //     Vec2::new(transform.translation.x + dx, transform.translation.z + dz),
+                // ).unwrap();
             }
         }
     }
@@ -185,6 +186,51 @@ pub fn take_damage(
                 }
             }
             None => {}
+        }
+    }
+
+    for enemy in enemies_to_despawn {
+        commands.entity(enemy).despawn_recursive();
+    }
+    for orb in orbs_to_despawn {
+        commands.entity(orb).despawn_recursive();
+    }
+}
+
+pub fn take_damage_n2(
+    mut commands: Commands,
+    mut enemy_query: Query<(Entity, &mut health::HealthPoints, &Transform), With<Enemy>>,
+    orb_query: Query<(Entity, &Transform, Option<&tower::Damage>), With<orb::Orb>>,
+) {
+    let mut enemies_to_despawn = HashSet::new();
+    let mut orbs_to_despawn = HashSet::new();
+    let mut enemies: HashMap<Entity, (&Transform, Mut<health::HealthPoints>)> = HashMap::new();
+    let mut orbs: HashMap<Entity, (&Transform, Option<&tower::Damage>)> = HashMap::new();
+
+    enemy_query
+        .iter_mut()
+        .for_each(|(entity, healthpoints, transform)| {
+            enemies.insert(entity, (transform, healthpoints));
+        });
+    orb_query.iter().for_each(|(entity, transform, damage)| {
+        orbs.insert(entity, (transform, damage));
+    });
+
+    for (enemy, (enemy_transform, enemy_hp)) in enemies.iter_mut() {
+        for (orb, (orb_transform, damage)) in orbs.iter_mut() {
+            let distance =
+                (orb_transform.translation - enemy_transform.translation).length();
+            if distance < 0.5 {
+                orbs_to_despawn.insert(*orb);
+
+                // Depending on the effects of the orb, we can do different things here.
+                if let Some(damage) = damage {
+                    enemy_hp.hp = enemy_hp.hp.saturating_sub(damage.hp);
+                }
+            }
+        }
+        if enemy_hp.hp == 0 {
+            enemies_to_despawn.insert(*enemy);
         }
     }
 

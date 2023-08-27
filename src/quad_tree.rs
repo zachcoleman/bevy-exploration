@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use std::sync::mpsc;
+use std::sync::{Arc, Mutex};
 use std::collections::{HashSet, VecDeque};
 
 #[derive(Clone, Debug, Resource)]
@@ -7,15 +9,24 @@ pub struct QuadTree {
     pub min_size: f32,
     pub children: Option<[Box<QuadTree>; 4]>,
     pub objects: Option<HashSet<Entity>>,
+    pub sender: Option<mpsc::Sender<(Entity, Vec2)>>,
+    pub receiver: Option<Arc<Mutex<mpsc::Receiver<(Entity, Vec2)>>>>,
 }
 
 impl QuadTree {
-    pub fn new(bounds: [Vec2; 2], min_size: f32) -> Self {
+    pub fn new(
+        bounds: [Vec2; 2], 
+        min_size: f32, 
+        sender: Option<mpsc::Sender<(Entity, Vec2)>>, 
+        receiver: Option<Arc<Mutex<mpsc::Receiver<(Entity, Vec2)>>>>
+    ) -> Self {
         let mut root = QuadTree {
             bounds,
             min_size,
             children: None,
             objects: None,
+            sender: sender,
+            receiver: receiver,
         };
         let curr_size = bounds[1].x - bounds[0].x;
         if curr_size > min_size {
@@ -40,10 +51,10 @@ impl QuadTree {
                 [midpoint, root.bounds[1]],
             ];
             root.children = Some([
-                Box::new(QuadTree::new(children_bounds[0], min_size)),
-                Box::new(QuadTree::new(children_bounds[1], min_size)),
-                Box::new(QuadTree::new(children_bounds[2], min_size)),
-                Box::new(QuadTree::new(children_bounds[3], min_size)),
+                Box::new(QuadTree::new(children_bounds[0], min_size, None, None)),
+                Box::new(QuadTree::new(children_bounds[1], min_size, None, None)),
+                Box::new(QuadTree::new(children_bounds[2], min_size, None, None)),
+                Box::new(QuadTree::new(children_bounds[3], min_size, None, None)),
             ]);
         }
         root
@@ -75,6 +86,33 @@ impl QuadTree {
             }
         }
         leaf_nodes
+    }
+
+    pub fn submit_for_insert(&self, entity: Entity, position: Vec2) -> Result<(), ()>{
+        match self.sender.clone(){
+            Some(ch) => {
+                ch.send((entity, position)).unwrap();
+                Ok(())
+            }
+            None => {
+                Err(())
+            }
+        }
+    }
+
+    pub fn insert_from_receiver(&mut self) -> Result<(), ()>{
+        match self.receiver.clone(){
+            Some(ch) => {
+                let rx = ch.lock().unwrap();
+                while let Ok((entity, position)) = rx.try_recv() {
+                    self.insert(entity, position).unwrap();
+                }
+                Ok(())
+            }
+            None => {
+                Err(())
+            }
+        }
     }
 
     pub fn insert(&mut self, entity: Entity, position: Vec2) -> Result<(), ()> {
@@ -113,10 +151,19 @@ pub struct LeafNode {
 }
 
 pub fn add_quad_tree(mut commands: Commands) {
+    let (sender, receiver) = mpsc::channel();
     commands.insert_resource(QuadTree::new(
         [Vec2::new(-24., -24.), Vec2::new(24., 24.)],
         4.,
+        Some(sender),
+        Some(Arc::new(Mutex::new(receiver))),
     ));
+}
+
+pub fn index_items(
+    mut quad_tree: ResMut<QuadTree>,
+) {
+    quad_tree.insert_from_receiver().unwrap();
 }
 
 pub fn clear_quad_tree(mut quad_tree: ResMut<QuadTree>) {
