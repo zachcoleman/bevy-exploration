@@ -16,10 +16,12 @@ cargo install -f wasm-bindgen-cli
 rustup target install wasm32-unknown-unknown
 ```
 
-### Build and Deploy Necessary Files to `out/`
+### Build and Deploy Necessary Files to `website/`
 ```sh
 cargo build --release --target wasm32-unknown-unknown
-wasm-bindgen --out-dir ./out/ --target web ./target/wasm32-unknown-unknown/release/bevy-exploration.wasm
+wasm-bindgen --out-dir ./website/ --target web ./target/wasm32-unknown-unknown/release/bevy-exploration.wasm
+rm -rf ./website/assets
+cp -R ./assets ./website
 ```
 
 ## Using Demo Website / Controls
