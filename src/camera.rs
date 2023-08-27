@@ -1,5 +1,6 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
+use bevy_inspector_egui::egui::epaint::text::cursor;
 use bevy_mod_picking::PickingCameraBundle;
 
 /// camera plugin (used to navigate a map)
@@ -13,6 +14,7 @@ impl Plugin for CameraPlayerPlugin {
                 starting_pos: Vec3::new(5., 5., 5.),
             })
             .add_startup_system(spawn_camera)
+            .add_startup_system(spawn_cursor)
             .add_system(key_moves)
             .add_system(scroll_wheel_zoom);
     }
@@ -46,6 +48,10 @@ pub struct CameraLookAt {
 #[derive(Component)]
 pub struct CameraPlayer;
 
+/// marker component for the cursor
+#[derive(Component)]
+pub struct CameraCursor;
+
 /// spawn camera by default starts w/ set distance and looking at 45 degrees to ground
 pub fn spawn_camera(settings: Res<CameraSettings>, mut commands: Commands) {
     commands.spawn((
@@ -60,38 +66,72 @@ pub fn spawn_camera(settings: Res<CameraSettings>, mut commands: Commands) {
     ));
 }
 
+pub fn spawn_cursor(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(
+                shape::UVSphere {
+                    radius: 0.1,
+                    ..Default::default()
+                }
+            )),
+            material: materials.add(StandardMaterial{
+                base_color: Color::rgba(1., 1., 1., 0.05),
+                ..Default::default()
+            }),
+            transform: Transform::from_translation(Vec3::new(0., 0.25, 0.)),
+            ..Default::default()
+        },
+        CameraCursor,
+    ));
+}
+
 /// move the camera based on input (WASD+QE+space+lshift+scroll)
 fn key_moves(
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     settings: Res<CameraSettings>,
-    mut query_transform: Query<(&mut Transform, &mut CameraLookAt), With<CameraPlayer>>,
+    mut camera_transform: Query<(&mut Transform, &mut CameraLookAt), With<CameraPlayer>>,
+    mut cursor_transform: Query<&mut Transform, (With<CameraCursor>, Without<CameraPlayer>)>,
 ) {
-    let (mut transform, mut look_at) = query_transform.single_mut();
+    let (mut camera_transform, mut look_at) = camera_transform.single_mut();
+    let mut cursor_transform = cursor_transform.single_mut();
+
     let mut cam_delta = Vec3::ZERO;
     let mut look_delta = Vec3::ZERO;
-    let local_z = transform.local_z();
+    let mut cursor_delta = Vec3::ZERO;
+
+    let local_z = camera_transform.local_z();
     let forward = -Vec3::new(local_z.x, 0., local_z.z);
     let right = Vec3::new(local_z.z, 0., -local_z.x);
     let vertical_ratio = (settings.starting_pos.x.powi(2) + settings.starting_pos.z.powi(2)).sqrt()
         / settings.starting_pos.y.abs();
+
     for key in keys.get_pressed() {
         match key {
             KeyCode::W => {
                 cam_delta = forward * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
+                cursor_delta = cam_delta;
             }
             KeyCode::S => {
                 cam_delta = -forward * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
+                cursor_delta = cam_delta;
             }
             KeyCode::A => {
                 cam_delta = -right * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
+                cursor_delta = cam_delta;
             }
             KeyCode::D => {
                 cam_delta = right * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
+                cursor_delta = cam_delta;
             }
             KeyCode::Space => {
                 cam_delta = Vec3::Y * settings.speed * time.delta_seconds();
@@ -104,27 +144,32 @@ fn key_moves(
                     -forward.normalize() * settings.speed * time.delta_seconds() * vertical_ratio;
             }
             KeyCode::Q => {
-                transform.rotate_around(
+                camera_transform.rotate_around(
                     look_at.target,
                     Quat::from_rotation_y(-0.1 * settings.speed * time.delta_seconds()),
                 );
             }
             KeyCode::E => {
-                transform.rotate_around(
+                camera_transform.rotate_around(
                     look_at.target,
                     Quat::from_rotation_y(0.1 * settings.speed * time.delta_seconds()),
                 );
             }
             _ => {}
         }
-        if (transform.translation + cam_delta).y < settings.y_bounds.0
-            || settings.y_bounds.1 < (transform.translation + cam_delta).y
+
+        // update camera position
+        if (camera_transform.translation + cam_delta).y < settings.y_bounds.0
+            || settings.y_bounds.1 < (camera_transform.translation + cam_delta).y
         {
             cam_delta = Vec3::ZERO;
             look_delta = Vec3::ZERO;
         }
-        transform.translation += cam_delta;
+        camera_transform.translation += cam_delta;
         look_at.target += look_delta;
+
+        // update cursor position
+        cursor_transform.translation += cursor_delta;
     }
 }
 

@@ -1,7 +1,7 @@
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy_framepace::FramepacePlugin;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+// use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+// use bevy_framepace::FramepacePlugin;
+// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_picking::*;
 
 mod assets;
@@ -48,11 +48,11 @@ fn main() {
 
         /*** CoreStage::Update ***/
         // third party plugins
-        .add_plugin(WorldInspectorPlugin::new())
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(WorldInspectorPlugin::new())
+        // .add_plugin(LogDiagnosticsPlugin::default())
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(FramepacePlugin)
         .add_plugins(DefaultPickingPlugins)
-        .add_plugin(FramepacePlugin)
 
         // my plugins
         .add_plugin(camera::CameraPlayerPlugin)
@@ -67,8 +67,8 @@ fn main() {
                 enemy::index_enemies,
                 orb::index_orbs,
                 quad_tree::update_leaf_node_color,
-                enemy::take_damage, 
-                orb::despawn_reach_target,
+                enemy::take_damage,
+                orb::despawn_reach_ground,
                 quad_tree::clear_quad_tree,
             ).chain()
         )

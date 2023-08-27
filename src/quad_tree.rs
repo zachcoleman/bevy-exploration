@@ -114,7 +114,7 @@ pub struct LeafNode {
 
 pub fn add_quad_tree(mut commands: Commands) {
     commands.insert_resource(QuadTree::new(
-        [Vec2::new(-64., -64.), Vec2::new(64., 64.)],
+        [Vec2::new(-24., -24.), Vec2::new(24., 24.)],
         4.,
     ));
 }
@@ -133,11 +133,17 @@ pub fn visualize_quad_tree_leaves(
         let bounds = node.bounds;
         commands.spawn((
             PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Cube {
-                    size: quad_tree.min_size,
-                })),
+                mesh: meshes.add(
+                    Mesh::from(
+                        shape::Box::new(
+                            bounds[1].x - bounds[0].x,
+                            0.25,
+                            bounds[1].y - bounds[0].y,
+                        )
+                    )
+                ),
                 material: materials.add(StandardMaterial {
-                    base_color: Color::rgba(1., 0., 0., 0.1),
+                    base_color: Color::rgba(1., 0., 0., 0.04),
                     alpha_mode: AlphaMode::Blend,
                     ..Default::default()
                 }),
@@ -161,10 +167,10 @@ pub fn update_leaf_node_color(
     let leaf_node_vec: Vec<_> = quad_tree.get_leaf_nodes().into();
     for (leaf_node, material_handle) in leaf_node_query.iter() {
         let material = materials.get_mut(material_handle).unwrap();
-        let orig_color = Color::rgba(1., 0., 0., 0.1);
+        let orig_color = Color::rgba(1., 0., 0., 0.04);
         let node = &leaf_node_vec[leaf_node.ix];
         if node.objects.is_some() {
-            material.base_color = Color::rgba(0., 0., 1., 0.1);
+            material.base_color = Color::rgba(0., 0., 1., 0.04);
         } else if node.objects.is_none() {
             material.base_color = orig_color;
         }

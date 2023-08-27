@@ -55,24 +55,28 @@ pub fn spawn_tower(
                     .iter()
                     .filter(|t| t.1.selected())
                     .map(|t| t.0.translation)
-                    .next()
-                    .unwrap();
-                commands.spawn((
-                    PbrBundle {
-                        mesh: assets.tower_mesh.clone(),
-                        material: materials.add(color.into()),
-                        transform: Transform::from_translation(location + Vec3::new(0., 0.1, 0.)),
-                        ..Default::default()
-                    },
-                    Tower,
-                    Name::new("Tower"),
-                    Shooting {
-                        timer: Timer::from_seconds(1.0, TimerMode::Repeating),
-                    },
-                    Range { range: 15.0 },
-                    Damage { hp: 4 },
-                    PickableBundle::default(),
-                ));
+                    .next();
+                match location{
+                    Some(location) => {
+                        commands.spawn((
+                            PbrBundle {
+                                mesh: assets.tower_mesh.clone(),
+                                material: materials.add(color.into()),
+                                transform: Transform::from_translation(location + Vec3::new(0., 0.1, 0.)),
+                                ..Default::default()
+                            },
+                            Tower,
+                            Name::new("Tower"),
+                            Shooting {
+                                timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+                            },
+                            Range { range: 15.0 },
+                            Damage { hp: 5 },
+                            PickableBundle::default(),
+                        ));
+                    }
+                    None => { continue; }
+                }
             }
             _ => {}
         }
@@ -86,28 +90,27 @@ pub fn spawn_default_towers(
     assets: Res<assets::GameAssets>,
     cell_query: Query<&Transform, With<grid::Cell>>,
 ) {
-    for (ux, cell) in cell_query.iter().enumerate() {
-        if ux % 6 != 0 {
-            continue;
+    for (_ux, cell) in cell_query.iter().enumerate() {
+        if cell.translation.x.abs() < 3. && cell.translation.z.abs() < 3. {
+            let color = Color::rgba(0., 0.7, 0.7, 255.);
+            let location = cell.translation;
+            commands.spawn((
+                PbrBundle {
+                    mesh: assets.tower_mesh.clone(),
+                    material: materials.add(color.into()),
+                    transform: Transform::from_translation(location + Vec3::new(0., 0.1, 0.)),
+                    ..Default::default()
+                },
+                Tower,
+                Shooting {
+                    timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+                },
+                Damage { hp: 5 },
+                Range { range: 15.0 },
+                PickableBundle::default(),
+                Name::new("Tower"),
+            ));
         }
-        let color = Color::rgba(0., 0.7, 0.7, 255.);
-        let location = cell.translation;
-        commands.spawn((
-            PbrBundle {
-                mesh: assets.tower_mesh.clone(),
-                material: materials.add(color.into()),
-                transform: Transform::from_translation(location + Vec3::new(0., 0.1, 0.)),
-                ..Default::default()
-            },
-            Tower,
-            Shooting {
-                timer: Timer::from_seconds(1.0, TimerMode::Repeating),
-            },
-            Damage { hp: 4 },
-            Range { range: 15.0 },
-            PickableBundle::default(),
-            Name::new("Tower"),
-        ));
     }
 }
 
@@ -152,6 +155,7 @@ pub fn tower_shoot(
                         ..Default::default()
                     },
                     orb::Orb {
+                        direction: (target_pt - start_pt).normalize(),
                         target: target_pt,
                         speed: 10.0,
                     },

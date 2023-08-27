@@ -34,8 +34,8 @@ pub fn spawn_enemy(
     for key in keys.get_just_pressed() {
         match key {
             KeyCode::X => {
-                for _ in 0..25 {
-                    let (jitter_x, jitter_z) = (rng.gen_range(0.0..8.0), rng.gen_range(0.0..8.0));
+                for _ in 0..10 {
+                    let (jitter_x, jitter_z) = (rng.gen_range(-4.0..4.0), rng.gen_range(-4.0..4.0));
                     let loc = location + Vec3::new(jitter_x, 0., jitter_z);
                     commands.spawn((
                         PbrBundle {
@@ -119,31 +119,20 @@ pub fn index_enemies(
         if transform.translation.x.is_nan() || transform.translation.z.is_nan() {
             continue;
         }
-        // insert 4 corners of the enemy into the quad tree
-        quad_tree
-            .insert(
-                entity,
-                Vec2::new(transform.translation.x - 0.5, transform.translation.z - 0.5),
-            )
-            .unwrap();
-        quad_tree
-            .insert(
-                entity,
-                Vec2::new(transform.translation.x + 0.5, transform.translation.z - 0.5),
-            )
-            .unwrap();
-        quad_tree
-            .insert(
-                entity,
-                Vec2::new(transform.translation.x - 0.5, transform.translation.z + 0.5),
-            )
-            .unwrap();
-        quad_tree
-            .insert(
-                entity,
-                Vec2::new(transform.translation.x + 0.5, transform.translation.z + 0.5),
-            )
-            .unwrap();
+        for (dx, dz) in &[
+            (-0.5, -0.5),
+            (0.5, -0.5),
+            (-0.5, 0.5),
+            (0.5, 0.5),
+        ] {
+            let tmp = Vec2::new(transform.translation.x + dx, transform.translation.z + dz);
+            if quad_tree.contains(tmp) {
+                quad_tree.insert(
+                    entity,
+                    Vec2::new(transform.translation.x + dx, transform.translation.z + dz),
+                ).unwrap();
+            }
+        }
     }
 }
 
