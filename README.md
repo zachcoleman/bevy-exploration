@@ -4,7 +4,7 @@ Exploring the Rust game engine Bevy through a simple tower defense demo. Feature
 - Implementation of a static quad tree
 - Limited flocking algorithm for enemies 
 
-The static quad tree is on in the current implementation deployed to the webpage.
+The static quad tree is currently visualized in the current implementation deployed to the webpage.
 
 ## Using Demo / Controls
 
