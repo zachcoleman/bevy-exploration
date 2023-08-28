@@ -19,7 +19,7 @@ The camera has a cursor (a white sphere). Movement consists of:
 Pressing `t` with a selected hexagon will spawn a tower.
 
 ### Spawn Enemies
-Pressing `x` will spawn a group of 10 enemies around the cursor.
+Pressing `x` will spawn a group of 10 enemies around the camera cursor (white sphere).
 
 
 ## Web Development 
