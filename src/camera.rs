@@ -1,5 +1,6 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
+use bevy_inspector_egui::egui::epaint::text::cursor;
 use bevy_mod_picking::PickingCameraBundle;
 
 /// camera plugin (used to navigate a map)
@@ -165,6 +166,7 @@ fn key_moves(
         {
             cam_delta = Vec3::ZERO;
             look_delta = Vec3::ZERO;
+            cursor_delta = Vec3::ZERO;
         }
         camera_transform.translation += cam_delta;
         look_at.target += look_delta;
