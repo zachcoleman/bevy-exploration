@@ -136,11 +136,13 @@ fn key_moves(
                 cam_delta = Vec3::Y * settings.speed * time.delta_seconds();
                 look_delta =
                     forward.normalize() * settings.speed * time.delta_seconds() * vertical_ratio;
+                cursor_delta = look_delta;
             }
             KeyCode::LShift => {
                 cam_delta = -Vec3::Y * settings.speed * time.delta_seconds();
                 look_delta =
                     -forward.normalize() * settings.speed * time.delta_seconds() * vertical_ratio;
+                cursor_delta = look_delta;
             }
             KeyCode::Q => {
                 camera_transform.rotate_around(
