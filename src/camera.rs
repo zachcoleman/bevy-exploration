@@ -1,6 +1,5 @@
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
-use bevy_inspector_egui::egui::epaint::text::cursor;
 use bevy_mod_picking::PickingCameraBundle;
 
 /// camera plugin (used to navigate a map)
@@ -103,7 +102,6 @@ fn key_moves(
 
     let mut cam_delta = Vec3::ZERO;
     let mut look_delta = Vec3::ZERO;
-    let mut cursor_delta = Vec3::ZERO;
 
     let local_z = camera_transform.local_z();
     let forward = -Vec3::new(local_z.x, 0., local_z.z);
@@ -116,34 +114,28 @@ fn key_moves(
             KeyCode::W => {
                 cam_delta = forward * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
-                cursor_delta = cam_delta;
             }
             KeyCode::S => {
                 cam_delta = -forward * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
-                cursor_delta = cam_delta;
             }
             KeyCode::A => {
                 cam_delta = -right * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
-                cursor_delta = cam_delta;
             }
             KeyCode::D => {
                 cam_delta = right * settings.speed * time.delta_seconds();
                 look_delta = cam_delta;
-                cursor_delta = cam_delta;
             }
             KeyCode::Space => {
                 cam_delta = Vec3::Y * settings.speed * time.delta_seconds();
                 look_delta =
                     forward.normalize() * settings.speed * time.delta_seconds() * vertical_ratio;
-                cursor_delta = look_delta;
             }
             KeyCode::LShift => {
                 cam_delta = -Vec3::Y * settings.speed * time.delta_seconds();
                 look_delta =
                     -forward.normalize() * settings.speed * time.delta_seconds() * vertical_ratio;
-                cursor_delta = look_delta;
             }
             KeyCode::Q => {
                 camera_transform.rotate_around(
@@ -166,13 +158,10 @@ fn key_moves(
         {
             cam_delta = Vec3::ZERO;
             look_delta = Vec3::ZERO;
-            cursor_delta = Vec3::ZERO;
         }
         camera_transform.translation += cam_delta;
         look_at.target += look_delta;
-
-        // update cursor position
-        cursor_transform.translation += cursor_delta;
+        cursor_transform.translation += look_delta;
     }
 }
 
